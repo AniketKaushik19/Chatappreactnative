@@ -1,4 +1,5 @@
 import { acceptFriendRequest, cancelFriendRequest, discoverUsers, getFriendsDetailed, rejectFriendRequest, sendFriendRequest } from "./friend.service.js"
+import { io } from "../../index.js";
 
 export async function sendRequest(req, res) {
     try {
@@ -6,7 +7,13 @@ export async function sendRequest(req, res) {
         const {receiverId}=req.body
         
         const result=await sendFriendRequest(senderId, receiverId)
-        // TODO: Implement push notification later
+        
+        // Emit friend request notification to receiver
+        io.to(receiverId).emit("friend_request_received", {
+            requestId: result.id,
+            from: senderId
+        });
+        
         return res.json(result)
     } catch (error) {
         return res.status(400).json({message:error.message || "Failed to send request"})
@@ -40,6 +47,13 @@ export async function acceptRequest(req, res) {
         const {requestId}=req.params;
 
         const result =await acceptFriendRequest(requestId,userId)
+
+        // Notify the request sender that their request was accepted
+        if (result?.senderId) {
+            io.to(result.senderId).emit("friend_request_accepted", {
+                userId: userId
+            });
+        }
 
         return res.json(result)
     } catch (error) {

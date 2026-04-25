@@ -5,6 +5,8 @@ import { listConversations, listMessage, markRead, send } from './chat.controlle
 
 export const chatRouter=Router();
 
+chatRouter.use(requireAuth);
+
 chatRouter.post("/send",send)
 chatRouter.post("/mark-read",markRead)
 chatRouter.get("/messages/:otherUserId",listMessage)

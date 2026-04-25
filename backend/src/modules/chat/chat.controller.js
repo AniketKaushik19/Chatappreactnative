@@ -1,4 +1,5 @@
-import { sendMessage , getConversation , markMessageAsRead ,getMessage } from "./chat.services";
+import { sendMessage , getConversation , markMessageAsRead ,getMessage } from "./chat.services.js";
+import { io } from "../../index.js";
 
 export async function send(req,res) {
     try {
@@ -6,7 +7,17 @@ export async function send(req,res) {
         const {receiverId,content}=req.body;
         
         const result=await sendMessage(senderId,receiverId , content)
-        //TODO: Websocekt , notification
+        
+        // Emit to conversation room
+        const conversationId = [senderId, receiverId].sort().join("-");
+        io.to(conversationId).emit("new_message", result);
+        
+        // Also emit to receiver's personal room for global notifications
+        io.to(receiverId).emit("notification:new_message", {
+            ...result,
+            conversationId
+        });
+        
         return res.json(result)
     } catch (error) {
         return res.status(400).json({message:"Failed to send Message"})
@@ -49,10 +60,11 @@ export async function listConversations(req,res) {
     try {
         const userId=req.user.id
         const result=await getConversation(userId)
-
+        
         return res.json(result)
     } catch (error) {
         return res.status(400).json({message:error.message || "Failed to fetch conversation"})
     }
 }
+
 

@@ -12,18 +12,13 @@ export const sendMessage=async (senderId , receiverId , content) => {
         throw new Error("You cannot send a message  to yourself")
     }
     const [u1 , u2]=normalizePair(senderId , receiverId);
-
     const existingFriend=await prisma.friend.findFirst({
         where:{
             userId1:u1,
             userId2:u2,
         },
-        select:{
-            id:true,
-            status:true,
-        }
     })
-
+    
     if(!existingFriend){
         throw new Error("You can only send message to friends")
     }
