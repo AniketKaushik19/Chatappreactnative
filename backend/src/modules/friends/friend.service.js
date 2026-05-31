@@ -49,7 +49,7 @@ export const sendFriendRequest = async (senderId, receiverId) => {
         return {
         success: true,
         message: "Friend request sent successfully",
-      
+        id: updated.id,
       };
         }
 
@@ -58,7 +58,7 @@ export const sendFriendRequest = async (senderId, receiverId) => {
         }
      }
 
-   await prisma.friendRequest.create({
+   const created = await prisma.friendRequest.create({
         data:{
             senderId,
             receiverId,
@@ -69,6 +69,7 @@ export const sendFriendRequest = async (senderId, receiverId) => {
      return {
         success:true,
         message:"Friend request sent successfully",
+        id: created.id,
      }
 };
 

@@ -26,7 +26,7 @@ export const auth = betterAuth({
     // ... the rest of your configuration
     trustedOrigins:[
         "chatapp://",
-        ...(process.env!=="production")?
+        ...(process.env.NODE_ENV!=="production")?
         [
              "exp://",                      // Trust all Expo URLs (prefix matching)
             "exp://**",                    // Trust all Expo URLs (wildcard matching)

@@ -1,5 +1,7 @@
 import { sendMessage , getConversation , markMessageAsRead ,getMessage } from "./chat.services.js";
 import { io } from "../../index.js";
+import { prisma } from "../../lib/db.js";
+import { sendNewMessageNotification } from "../../lib/push-notification.js";
 
 export async function send(req,res) {
     try {
@@ -17,6 +19,31 @@ export async function send(req,res) {
             ...result,
             conversationId
         });
+
+        // Send Push Notification
+        try {
+            const [sender, receiverTokens] = await Promise.all([
+                prisma.user.findUnique({
+                    where: { id: senderId },
+                    select: { name: true, image: true }
+                }),
+                prisma.pushToken.findMany({
+                    where: { userId: receiverId },
+                    select: { token: true }
+                })
+            ]);
+
+            if (sender && receiverTokens.length > 0) {
+                console.log(`Sending message push notifications to receiverId: ${receiverId} (${receiverTokens.length} devices)`);
+                await Promise.all(
+                    receiverTokens.map(t => 
+                        sendNewMessageNotification(t.token, sender.name, content, sender.image, senderId)
+                    )
+                );
+            }
+        } catch (pushErr) {
+            console.error("Failed to send message push notification:", pushErr);
+        }
         
         return res.json(result)
     } catch (error) {

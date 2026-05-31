@@ -26,7 +26,7 @@ model User {
   image         String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
-  pushToken     String?
+  pushTokens    PushToken[]
   sessions      Session[]
   accounts      Account[]
 
@@ -127,7 +127,7 @@ model FriendRequest {
   @@unique([senderId, receiverId])
   @@index([receiverId])
   @@index([senderId])
-  @@map("friendRequest")
+  @@map("FriendRequest")
 }
 
 model Friend {
@@ -145,7 +145,7 @@ model Friend {
   @@unique([userId1, userId2])
   @@index([userId1])
   @@index([userId2])
-  @@map("friend")
+  @@map("Friend")
 }
 
 enum FriendRequestStatus {
@@ -153,4 +153,16 @@ enum FriendRequestStatus {
   ACCEPTED
   REJECTED
   CANCELLED
+}
+
+model PushToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@map("pushToken")
 }

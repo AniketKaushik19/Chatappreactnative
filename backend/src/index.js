@@ -18,6 +18,9 @@ app.use(express.json())
 app.get("/",(req,res)=>{
     res.send("Hello world from backend server")
 })
+app.post("/",(req,res)=>{
+    res.send("Hello world from backend server")
+})
 
 app.use("/api/v1/friend", friendRouter)
 app.use("/api/v1/chat", chatRouter)

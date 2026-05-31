@@ -1,5 +1,7 @@
 import { acceptFriendRequest, cancelFriendRequest, discoverUsers, getFriendsDetailed, rejectFriendRequest, sendFriendRequest } from "./friend.service.js"
 import { io } from "../../index.js";
+import { prisma } from "../../lib/db.js";
+import { sendFriendRequestNotification } from "../../lib/push-notification.js";
 
 export async function sendRequest(req, res) {
     try {
@@ -13,6 +15,31 @@ export async function sendRequest(req, res) {
             requestId: result.id,
             from: senderId
         });
+
+        // Send Push Notification
+        try {
+            const [sender, receiverTokens] = await Promise.all([
+                prisma.user.findUnique({
+                    where: { id: senderId },
+                    select: { name: true, image: true }
+                }),
+                prisma.pushToken.findMany({
+                    where: { userId: receiverId },
+                    select: { token: true }
+                })
+            ]);
+
+            if (sender && receiverTokens.length > 0) {
+                console.log(`Sending friend request push notifications to receiverId: ${receiverId} (${receiverTokens.length} devices)`);
+                await Promise.all(
+                    receiverTokens.map(t => 
+                        sendFriendRequestNotification(t.token, sender.name, sender.image, result.id)
+                    )
+                );
+            }
+        } catch (pushErr) {
+            console.error("Failed to send friend request push notification:", pushErr);
+        }
         
         return res.json(result)
     } catch (error) {
